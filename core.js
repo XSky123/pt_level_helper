@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PT Level Helper
 // @namespace    https://xsky123.com/
-// @version      0.1
+// @version      0.2
 // @description  A simple way to help you know when you will level up
 // @author       XSky123
 // @match       *://u2.dmhy.org/userdetails*
@@ -16,16 +16,17 @@
     'use strict';
 
     function show_next_upgrade() {
-        var site = get_site_name();
-        var register_time = get_register_time();
-        var level = get_current_level(site);
-        var next_level = load_next_level(site, level);
-        var next_level_info = load_level_data(site, next_level);
-        var next_download = next_level_info['down'];
-        var next_upload = get_next_upload(next_level_info);
-        var upgrade_time = add_weeks(register_time, next_level_info['weeks']);
-        var current_upload = get_upload(site);
-        var current_download = get_download(site);
+
+        let site = get_site_name();
+        let register_time = get_register_time();
+        let level = get_current_level(site);
+        let next_level = load_next_level(site, level);
+        let next_level_info = load_level_data(site, next_level);
+        let next_download = next_level_info['down'];
+        let next_upload = get_next_upload(next_level_info);
+        let upgrade_time = add_weeks(register_time, next_level_info['weeks']);
+        let current_upload = get_upload(site);
+        let current_download = get_download(site);
 
 
         write_upgrade_time(site, next_level, upgrade_time);
@@ -35,18 +36,18 @@
     }
 
     function write_upgrade_time(site, next_level, upgrade_time) {
-        var now = new Date();
-        var ksr = document.querySelectorAll('td.rowhead');
-        var ksp;
-        var target;
+        let now = new Date();
+        let ksr = document.querySelectorAll('td.rowhead');
+        let ksp;
+        let target;
         ksr.forEach(function (ksp) {
             if (ksp.innerText.match('日期')) {
                 target = ksp;
             }
         });
 
-        var upgrade_info = document.createElement("span");
-        var upgrade_info_html;
+        let upgrade_info = document.createElement("span");
+        let upgrade_info_html;
         if (upgrade_time > now) {
             let rest_time = get_time_diff(now, upgrade_time, "day");
             let rest_time_str = get_next_upgrade_txt(rest_time);
@@ -70,8 +71,8 @@
     }
 
     function write_traffic_for_ttg(current_value, next_value, next_level, type = "upload") {
-        var target;
-        var origin_html;
+        let target;
+        let origin_html;
 
         if (type === "upload") {
             target = $("td.rowhead:contains('上传'):first").next();
@@ -94,9 +95,9 @@
         /* This part of code was inspired by popcorner@DUTPT.
          * Thanks to his advice, code here has been greatly simplified and normalized.
          */
-        var ksr = document.querySelectorAll('td.embedded>strong');
-        var ksp;
-        var ksl;
+        let ksr = document.querySelectorAll('td.embedded>strong');
+        let ksp;
+        let ksl;
         if (type === "upload") {
             ksr.forEach(function (ksp) {
                 if (ksp.innerText === '上传量' || ksp.innerHTML === '上傳量') {
@@ -110,7 +111,7 @@
                 }
             });
         }
-        var upgrade_info;
+        let upgrade_info;
         if (next_value > current_value) {
             upgrade_info = ` 距离下一等级<strong>${next_level}</strong>还有<strong>${number_format(next_value - current_value, 2)} GB</strong> `;
         } else {
@@ -122,11 +123,13 @@
     }
 
     function write_ratio(site, next_ratio, next_level) {
+        let current_ratio;
+
         switch (site){
             case "ttg":
-                var target = $("td.rowhead:contains('分享率'):first").next();
-                var origin_html = target.html();
-                var current_ratio = Number(target.text());
+                let target = $("td.rowhead:contains('分享率'):first").next();
+                let origin_html = target.html();
+                current_ratio = Number(target.text());
 
                 if (next_level > current_ratio) {
                     origin_html += ` 下一等级<strong>${next_level}</strong>需要达到分享率<strong>${next_ratio}</strong>`;
@@ -137,17 +140,17 @@
                 target.html(origin_html);
                 break;
             default:
-                var ksr = document.querySelectorAll('td.embedded>strong');
-                var ksp;
-                var ksl;
+                let ksr = document.querySelectorAll('td.embedded>strong');
+                let ksp;
+                let ksl;
                 ksr.forEach(function (ksp) {
                     if (ksp.innerText === '分享率') {
                         ksl = ksp
                     }
                 });
 
-                var current_ratio = Number(ksl.nextElementSibling.innerText);
-                var ratio_text;
+                current_ratio = Number(ksl.nextElementSibling.innerText);
+                let ratio_text;
                 if (current_ratio < next_ratio) {
                     ratio_text = ` 下一等级<strong>${next_level}</strong>需要达到分享率<strong>${next_ratio}</strong> `;
                 }else{
@@ -157,9 +160,24 @@
         }
     }
 
+    function get_current_user_personal_page_url(site){
+        let ksr;
+        let user_url;
+        switch (site){
+            case "ttg":
+                ksr = document.querySelector('span.smallfont');
+               break;
+            default:
+                ksr = document.querySelector('span.medium');
+        }
+
+        user_url = ksr.firstElementChild.firstElementChild.href;
+        return user_url;
+    }
+
     function get_site_name() {
-        var domain = window.location.host;
-        var site_name = "";
+        let domain = window.location.host;
+        let site_name = "";
         switch (domain) {
             case "u2.dmhy.org":
                 site_name = "u2";
@@ -179,36 +197,39 @@
     }
 
     function get_register_time() {
-        var html = document.body.innerHTML;
-        var reg_time_pattern = /日期.*?(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/;
-        var reg_time = html.match(reg_time_pattern);
-        var reg_time_value = reg_time[1];
+        let html = document.body.innerHTML;
+        let reg_time_pattern = /日期.*?(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/;
+        let reg_time = html.match(reg_time_pattern);
+        let reg_time_value = reg_time[1];
 
         console.log(`Register at: ${reg_time_value}`);
         return new Date(reg_time_value);
     }
 
     function get_current_level(site) {
-        var level_value;
+        let level_value;
+        let html;
+        let level_pattern;
+        let level;
         switch (site) {
             case "ttg":
-                var html = document.body.innerHTML;
-                var level_pattern = /等级.*?\">(.*?)</;
-                var level = html.match(level_pattern);
+                html = document.body.innerHTML;
+                level_pattern = /等级.*?\">(.*?)</;
+                level = html.match(level_pattern);
                 level_value = level[1];
 
                 break;
             case "mt":
-                var html = document.body.innerHTML;
-                var level_pattern = /等級.*?\<img alt=\"(.*?)\//;
-                var level = html.match(level_pattern);
+                html = document.body.innerHTML;
+                level_pattern = /等級.*?\<img alt=\"(.*?)\//;
+                level = html.match(level_pattern);
                 level_value = level[1];
                 break;
 
             default:
-                var html = document.body.innerHTML;
-                var level_pattern = /等级.*?\<img alt=\"(.*?)\"/;
-                var level = html.match(level_pattern);
+                html = document.body.innerHTML;
+                level_pattern = /等级.*?\<img alt=\"(.*?)\"/;
+                level = html.match(level_pattern);
                 level_value = level[1];
 
         }
@@ -218,27 +239,89 @@
 
     }
 
-    function get_upload(site) {
-        var upload_value;
-        var upload_tani;
-        switch (site) {
+    function get_upload(site){
+        return get_traffic(site);
+    }
+
+    function get_download(site){
+        return get_traffic(site, "download");
+    }
+
+    function get_traffic(site, type="upload"){
+        let traffic_data;
+        switch (site){
+            case "ttg":
+                traffic_data = get_traffic_from_ttg(type);
+                break;
             default:
-                let html = document.body.innerHTML;
-                let upload_pattern = /上.量.*?>\s?(\d+\.\d+) (\w{2,3})/;
-                let upload = html.match(upload_pattern);
-                upload_value = upload[1];
-                upload_tani = upload[2]; // 「tani」 は 「たんい」（単位）である。
+                traffic_data = get_traffic_form_normal_nexusphp(type);
         }
+        return all_tani_to_GB(traffic_data[0], traffic_data[1]);
+    }
 
-        console.log(`Upload: ${upload_value} ${upload_tani}`);
+    function get_traffic_from_ttg(type){
+        let ksr = document.querySelectorAll('td.rowhead');
+        let ksp;
+        let ksl;
+        let raw_traffic_text;
+        let parsed_traffic;
+        let traffic_value;
+        let traffic_tani;
+        let traffic_pattern = /(\d+\.\d+) (\w{2,3})/;
 
-        return all_tani_to_GB(upload_value, upload_tani);
+        ksr.forEach(function (ksp) {
+            if (type === 'download') {
+                if (ksp.innerText === '下载量') {
+                    ksl = ksp;
+                }
+            } else{
+                if (ksp.innerText === '上传量') {
+                    ksl = ksp;
+                }
+            }
+        });
+
+        raw_traffic_text = ksl.nextElementSibling.firstChild.textContent;
+        parsed_traffic = raw_traffic_text.match(traffic_pattern);
+        traffic_value = parsed_traffic[1];
+        traffic_tani = parsed_traffic[2];
+
+        return [traffic_value, traffic_tani];
+    }
+
+    function get_traffic_form_normal_nexusphp(type){
+        let ksr = document.querySelectorAll('td.embedded>strong');
+        let ksp;
+        let ksl;
+        let raw_traffic_text;
+        let parsed_traffic;
+        let traffic_value;
+        let traffic_tani;
+        let traffic_pattern = /(\d+\.\d+) (\w{2,3})/;
+        ksr.forEach(function (ksp) {
+            if (type === 'download'){
+                if (ksp.innerText === '下载量' || ksp.innerHTML === '下載量') {
+                    ksl = ksp;
+                }
+            }else {
+                if (ksp.innerText === '上传量' || ksp.innerHTML === '上傳量') {
+                    ksl = ksp;
+                }
+            }
+        });
+        raw_traffic_text = ksl.nextSibling.textContent;
+        parsed_traffic = raw_traffic_text.match(traffic_pattern);
+        traffic_value = parsed_traffic[1];
+        traffic_tani = parsed_traffic[2];
+
+        return [traffic_value, traffic_tani];
+
 
     }
 
     function get_next_upload(next_level_info) {
-        var next_upload = 0;
-        var next_upload_by_ratio = next_level_info['down'] * next_level_info['ratio'];
+        let next_upload = 0;
+        let next_upload_by_ratio = next_level_info['down'] * next_level_info['ratio'];
         if (next_level_info.hasOwnProperty('up')) {
             next_upload = ((next_upload > next_upload_by_ratio) ? next_upload : next_upload_by_ratio);
         } else {
@@ -248,94 +331,74 @@
         return next_upload;
     }
 
-    function get_download(site) {
-        var download_value;
-        var download_tani;
-        switch (site) {
-            default:
-                let html = document.body.innerHTML;
-                let download_pattern = /下.量.*?>\s?(\d+\.\d+) (\w{2,3})/;
-                let download = html.match(download_pattern);
-                download_value = download[1];
-                download_tani = download[2]; // 「tani」 は 「たんい」（単位）である。
-        }
-
-        console.log(`Download: ${download_value} ${download_tani}`);
-
-        return all_tani_to_GB(download_value, download_tani);
-
-    }
-
     function get_next_upgrade_txt(rest_time_by_day) {
-        var days = Math.floor(rest_time_by_day);
-        var origin_hours = (rest_time_by_day - days) * 24;
-        var hours = Math.floor(origin_hours);
-        var minutes = Math.floor((rest_time_by_day - days) * 60 * 24 - hours * 60);
-        var str = `${days}天${hours}小时${minutes}分`;
-        return str;
+        let days = Math.floor(rest_time_by_day);
+        let origin_hours = (rest_time_by_day - days) * 24;
+        let hours = Math.floor(origin_hours);
+        let minutes = Math.floor((rest_time_by_day - days) * 60 * 24 - hours * 60);
+        return `${days}天${hours}小时${minutes}分`;
     }
 
     function get_time_diff(time_before, time_after, tani) {
-        var diff = time_after.getTime() - time_before.getTime();
-        var MICROSECONDS_PER_DAY = 86400000;
-        var MICROSECONDS_PER_HOUR = 3600000;
+        let diff = time_after.getTime() - time_before.getTime();
+        let MICROSECONDS_PER_DAY = 86400000;
+        let MICROSECONDS_PER_HOUR = 3600000;
         switch (tani) {
             case "day":
                 return diff / MICROSECONDS_PER_DAY;
-                break;
+
             case "hour":
                 return diff / MICROSECONDS_PER_HOUR;
-                break;
+
 
         }
 
     }
 
     function add_weeks(time_obj, n) {
-        var new_date = new Date(time_obj);
+        let new_date = new Date(time_obj);
         new_date.setDate(time_obj.getDate() + n * 7);
         return new_date;
     }
-
 
     function all_tani_to_GB(value, tani) {// 「tani」 は 「たんい」（単位）である。
         switch (tani) {
             case "TB":
                 return Number(value) * 1000;
-                break;
+
 
             case "TiB":
                 return Number(value) * 1024;
-                break;
+
 
             case "GB":
             case "GiB":
                 return Number(value);
-                break;
+
 
             case "MB":
                 return Number(value) / 1000;
-                break;
+
 
             case "MiB":
                 return Number(value) / 1024;
-                break;
+
 
             case "PB":
                 return Number(value) * 1000 * 1000;
-                break;
+
 
             case "PiB":
                 return Number(value) * 1024 * 1024;
-                break;
+
 
             case "KB":
                 return Number(value) / 1000 / 1000;
-                break;
+
 
             case "KiB":
                 return Number(value) / 1024 / 1024;
-                break;
+
         }
         return null;
     }
@@ -444,7 +507,7 @@
     }
 
     function load_level_data(site, level) {
-        var data = {};
+        let data = {};
         switch (site) {
             case "u2":
                 data = {
@@ -695,5 +758,6 @@
         }
         return null;
     }
+
     show_next_upgrade();
 })();
